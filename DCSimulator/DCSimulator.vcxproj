@@ -110,6 +110,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Box2D\Box2D.h" />
+    <ClInclude Include="dcurling_simulator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dcurling_simulator.cpp" />
+    <ClCompile Include="dcurling_simulator_constructors.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
