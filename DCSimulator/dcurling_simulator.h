@@ -1,9 +1,22 @@
 #pragma once
 
 namespace digital_curling {
-	namespace simulator {
 
+		// Constant values
 		constexpr unsigned int kLastEndMax = 10;  // Maximum number of LastEnd
+
+		constexpr float kCenterX     =  2.375f;  // X coord of Center Line
+		constexpr float kTeeY        =  4.880f;  // Y coord of Tee Line
+		constexpr float kSideX       =  4.750f;  // X coord of Side Line
+		constexpr float kHogY        = 11.280f;  // Y coord of Hog Line
+		constexpr float kRinkHeight  = 42.500f;  // Height of Rink
+		constexpr float kStoneR      =  0.145f;  // Radius of Stone
+		constexpr float kHouseR      =  1.830f;  // Radius of House (12 foot circle)
+		constexpr float kHouse8FootR =  1.220f;  // Radius of House ( 8 foot circle)
+		constexpr float kHouse4FootR =  0.610f;  // Radius of House ( 4 foot circle)
+
+		constexpr float kRinkInfoX = 0.000f;
+		constexpr float kRinkInfoY = 3.050f;
 
 		// State of DigitalCurling game
 		typedef struct GameState {
@@ -54,9 +67,6 @@ namespace digital_curling {
 			bool angle;
 		} _ShotVec;
 
-		class BasicSimulator {
-
-		};
 
 		// Operators
 		ShotPos operator+(ShotPos pos_l, ShotPos pos_r);
@@ -67,5 +77,26 @@ namespace digital_curling {
 		ShotVec operator-(ShotVec pos_l, ShotVec pos_rs);
 		ShotVec operator+=(ShotVec &pos_l, ShotVec pos_r);
 		ShotVec operator-=(ShotVec &pos_l, ShotVec pos_r);
-	}
+
+		namespace b2simulator {
+
+			// Area of stone
+			typedef enum {
+				IN_RINK = 0x0000,
+				IN_PLAYAREA = IN_RINK << 1,
+				IN_FREEGUARD = IN_PLAYAREA << 1,
+				IN_HOUSE = IN_FREEGUARD << 1
+			} StoneArea;
+
+			// Simulation (this function is compatible with Simulation() in CurlingSimulator.h)
+			void Simulation(GameState *game_state, ShotVec shot_vec, float random_x, float random_y, ShotVec *run_shot);
+
+			// Add random number to ShotVec (normal distribution)
+			void AddRandom2Vec(float random_x, float random_y, ShotVec *vec);
+
+			// Set options for freeguard zone rule
+			void SetOptions(unsigned int shot_num, StoneArea area);
+			// Reset options to default
+			void SetOptions();
+		}
 }
