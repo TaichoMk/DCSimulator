@@ -25,7 +25,7 @@ namespace digital_curling {
 			GameState(unsigned int last_end);
 			~GameState();
 
-			//  Notice : member variables (and their name) are same as GAMESTATE in CurlingSimulator older ver2.x
+			//  Note: Same member variables as GAMESTATE in CurlingSimulator older ver2.x
 			unsigned int ShotNum;    // Number of current Shot
 
 			unsigned int CurEnd;     // Number of current End (0 to LastEnd - 1)
@@ -78,8 +78,8 @@ namespace digital_curling {
 		ShotVec operator+=(ShotVec &pos_l, ShotVec pos_r);
 		ShotVec operator-=(ShotVec &pos_l, ShotVec pos_r);
 
+		// Simulator with Box2D 2.3.0 (http://box2d.org/)
 		namespace b2simulator {
-
 			// Area of stone
 			typedef enum {
 				IN_RINK = 0x0000,
@@ -88,7 +88,7 @@ namespace digital_curling {
 				IN_HOUSE = IN_FREEGUARD << 1
 			} StoneArea;
 
-			// Simulation (this function is compatible with Simulation() in CurlingSimulator.h)
+			// Simulation (compatible with Simulation() in CurlingSimulator.h)
 			void Simulation(GameState *game_state, ShotVec shot_vec, float random_x, float random_y, ShotVec *run_shot);
 
 			// Add random number to ShotVec (normal distribution)

@@ -21,7 +21,7 @@ namespace digital_curling {
 		// Constant values for CreateBody()
 		constexpr float kStoneDensity    = 10.0f;
 		constexpr float kStoneResitution = 1.0f;
-		constexpr float kStoneFriction   = 12.009216f;  // NOTE: shoud not be constant?
+		constexpr float kStoneFriction   = 12.009216f;  // NOTE: shoud NOT be constant?
 
 		// Options
 		const unsigned int kNumFreeguard = 4;     // Num of shot for freeguard rule
@@ -77,7 +77,7 @@ namespace digital_curling {
 			b2Body *body[16];
 		};
 
-		// Simulation (this function is compatible with Simulation() in CurlingSimulator.h)
+		// Simulation (compatible with Simulation() in CurlingSimulator.h)
 		void Simulation(GameState *game_state, ShotVec shot_vec, float random_x, float random_y, ShotVec *run_shot) {
 
 			// Create board
