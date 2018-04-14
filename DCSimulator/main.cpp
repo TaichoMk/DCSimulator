@@ -1,7 +1,9 @@
 //#include "Box2D/Box2D.h"
 #include "dcurling_simulator.h"
 
+#include <fstream>
 #include <iostream>
+#include <iomanip>
 
 using digital_curling::GameState;
 using digital_curling::ShotPos;
@@ -33,14 +35,32 @@ void operator_test() {
 
 void simuration_test() {
 	GameState gs(8);
-	ShotVec vec(0, 0, false);
+	ShotVec vec(0.0f, -2.000f, false);
 
+	const size_t traj_size = 4096;
+	float trajectory[32 * traj_size];
+	memset(trajectory, 0, sizeof(float) * 32 * traj_size);
 
+	digital_curling::b2simulator::Simulation(&gs, vec, 0, 0, nullptr, trajectory, traj_size);
+
+	std::ofstream ofs("trajectory_log.txt");
+	for (unsigned int i = 0; i < traj_size; i++) {
+		for (unsigned int j = 0; j < 16; j++) {
+			ofs <<
+				std::fixed << std::setprecision(6) << trajectory[32 * i + 2 * j] << "," <<
+				std::fixed << std::setprecision(6) << trajectory[32 * i + 2 * j + 1];
+			if (j < 15) {
+				ofs << ",";
+			}
+		}
+		ofs << endl;
+	}
 }
 
 int  main(void) {
 
-	operator_test();
+	//operator_test();
+	simuration_test();
 
 	return 0;
 }
