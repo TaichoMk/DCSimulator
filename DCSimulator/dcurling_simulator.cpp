@@ -80,24 +80,14 @@ namespace digital_curling {
 		class Board {
 		public:
 			// Set stones into board
-			Board(GameState const &gs) : world_(b2Vec2(0, 0)) {
+			Board(GameState const &gs, ShotVec const &vec) : world_(b2Vec2(0, 0)) {
 				// Set shot_num_
 				shot_num_ = gs.ShotNum;
 				// Create bodies by positions of stone in GameState
 				for (unsigned int i = 0; i < gs.ShotNum; i++) {
 					body_[i] = CreateBody(gs.body[i][0], gs.body[i][1], world_);
 				}
-			}
-			~Board() {
-				for (unsigned int i = 0; i < 16; i++) {
-					if (body_[i] != nullptr) {
-						world_.DestroyBody(body_[i]);
-					}
-				}
-			}
 
-			// Set a Shot into Board
-			void SetShot(ShotVec const &vec) {
 				assert(shot_num_ < 16);
 				// Create body
 				body_[shot_num_] = CreateBody(kCenterX, kHackY, world_);
@@ -106,6 +96,13 @@ namespace digital_curling {
 				body_[shot_num_]->SetAngularVelocity(0.0f);  // should set number > 0 ?
 
 				shot_num_++;
+			}
+			~Board() {
+				for (unsigned int i = 0; i < 16; i++) {
+					if (body_[i] != nullptr) {
+						world_.DestroyBody(body_[i]);
+					}
+				}
 			}
 
 			b2World world_;
@@ -211,9 +208,6 @@ namespace digital_curling {
 			ShotVec* const run_shot, 
 			float *trajectory, size_t traj_size) {
 
-			// Create board
-			Board board(*game_state);
-
 			// Add random number to shot
 			AddRandom2Vec(random_x, random_y, &shot_vec);
 			if (run_shot != nullptr) {
@@ -221,8 +215,8 @@ namespace digital_curling {
 				memcpy_s(run_shot, sizeof(ShotVec), &shot_vec, sizeof(ShotVec));
 			}
 
-			// Set shot_vec to WorkVec
-			board.SetShot(shot_vec);
+			// Create board
+			Board board(*game_state, shot_vec);
 
 			// Run mainloop of simulation
 			MainLoop(kTimeStep, (int)traj_size, board, trajectory, traj_size);
