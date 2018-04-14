@@ -10,14 +10,10 @@ namespace digital_curling {
 		constexpr float kSideX       =  4.750f;  // X coord of Side Line
 		constexpr float kHogY        = 11.280f;  // Y coord of Hog Line
 		constexpr float kRinkHeight  = 42.500f;  // Height of Rink
-		constexpr float kHackY       = 41.280f;  // Y coord of Hack? (Shot starts here)
 		constexpr float kStoneR      =  0.145f;  // Radius of Stone
 		constexpr float kHouseR      =  1.830f;  // Radius of House (12 foot circle)
 		constexpr float kHouse8FootR =  1.220f;  // Radius of House ( 8 foot circle)
 		constexpr float kHouse4FootR =  0.610f;  // Radius of House ( 4 foot circle)
-
-		constexpr float kRinkInfoX = 0.000f;
-		constexpr float kRinkInfoY = 3.050f;
 
 		// State of DigitalCurling game
 		typedef struct GameState {
@@ -81,15 +77,23 @@ namespace digital_curling {
 		// Simulator with Box2D 2.3.0 (http://box2d.org/)
 		namespace b2simulator {
 			// Area of stone
+			// 0x0000
+			//   |||+- is in Rink
+			//   ||+-- is in PlayArea
+			//   |+--- is in FreeGuard
+			//   +---- is in House
 			typedef enum {
-				IN_RINK = 0x0000,
-				IN_PLAYAREA = IN_RINK << 1,
+				IN_RINK      = 0x0001,
+				IN_PLAYAREA  = IN_RINK << 1,
 				IN_FREEGUARD = IN_PLAYAREA << 1,
-				IN_HOUSE = IN_FREEGUARD << 1
+				IN_HOUSE     = IN_FREEGUARD << 1
 			} StoneArea;
 
 			// Simulation with Box2D (compatible with Simulation() in CurlingSimulator.h)
-			void Simulation(GameState* const game_state, ShotVec shot_vec, float random_x, float random_y, ShotVec* const run_shot, float *trajectory, size_t traj_size);
+			void Simulation(
+				GameState* const game_state, ShotVec shot_vec, 
+				float random_x, float random_y, 
+				ShotVec* const run_shot, float *trajectory, size_t traj_size);
 
 			// Add random number to ShotVec (normal distribution)
 			void AddRandom2Vec(float random_x, float random_y, ShotVec* const vec);

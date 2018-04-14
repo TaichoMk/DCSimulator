@@ -5,6 +5,11 @@
 //#include <cstdlib>
 //#include <cstring>
 
+// Include for debug TODO: Delete in Release build
+#include <bitset>
+#include <iostream>
+#include <iomanip>
+
 #include "Box2D/Box2D.h"
 
 #ifdef _DEBUG
@@ -18,11 +23,21 @@ namespace digital_curling {
 
 	namespace b2simulator {
 
-		// Constant values for simulation
+		// Constant values for Stone
 		constexpr float kStoneDensity    = 10.0f;
 		constexpr float kStoneResitution = 1.0f;
 		constexpr float kStoneFriction   = 12.009216f;  // NOTE: shoud NOT be constant?
+		constexpr float kHackY = 41.280f;     // Y coord of Hack? (Shot starts here)
 
+		// Constant values for Rink
+		constexpr float kPlayAreaXLeft   = 0.000f + kStoneR;
+		constexpr float kPlayAreaXRight  = kSideX - kStoneR;
+		constexpr float kPlayAreaYTop    = 3.050f + kStoneR;
+		constexpr float kPlayAreaYBottom = kHogY - kStoneR;
+		constexpr float kRinkYTop        = 0.000f + kStoneR;
+		constexpr float kRinkYBottom     = 3.050f + kRinkHeight - kStoneR;
+
+		// Constant values for simulation
 		constexpr int kVelocityIterations = 10;        // Iteration?
 		constexpr int kPositionIterations = 10;        // Iteration?
 		constexpr float kTimeStep = (1.0f / 1000.0f);  // Flame rate
@@ -98,15 +113,43 @@ namespace digital_curling {
 			unsigned int shot_num_;
 		};
 
-		void FrictionAll(float friction, Board &board) {
+		// Get which area stone is in
+		int GetStoneArea(const b2Vec2 &pos) {
+			int ret = 0;
 
+			// Check stone is in Rink and Playarea
+			if (kPlayAreaXLeft < pos.x && pos.x < kPlayAreaXRight) {
+				if (kRinkYTop < pos.y && pos.y < kRinkYBottom) {
+					ret |= IN_RINK;
+				}
+				if (kPlayAreaYTop < pos.y && pos.y < kPlayAreaYBottom) {
+					ret |= IN_PLAYAREA;
+					
+					// Calculate distance from center of House
+					float distance = b2Vec2(pos.x - kCenterX, pos.y - kTeeY).Length();
+					// Check stone is in house
+					if (distance < kHouseR + kStoneR) {
+						ret |= IN_HOUSE;
+					}
+					else if (kTeeY + kStoneR < pos.y) {
+						ret |= IN_FREEGUARD;
+					}
+				}
+			}
+
+			return ret;
+		}
+
+		// Add friction to all stones
+		void FrictionAll(float friction, Board &board) {
+			// TODO: impletent
 		}
 
 		// Main loop for simulation
 		int MainLoop(const float time_step, const int loop_count, Board &board, float *trajectory, size_t traj_size) {
 			int ret;
 
-			// Friction 0.5 step at first
+			// Add friction 0.5 step at first
 			FrictionAll(kStoneFriction * time_step * 0.5f, board);
 
 			for (ret = 0; ret < loop_count || ret == -1; ret++) {
@@ -118,26 +161,39 @@ namespace digital_curling {
 				if (trajectory != nullptr) {
 					b2Vec2 vec;
 					for (unsigned int i = 0; i < board.shot_num_ && i < traj_size; i++) {
-						vec = board.body_[i]->GetPosition();
-						trajectory[ret * 32 + i] = vec.x;
-						trajectory[ret * 32 + i + 1] = vec.y;
+						if (board.body_[i] != nullptr) {
+							vec = board.body_[i]->GetPosition();
+							trajectory[ret * 32 + i] = vec.x;
+							trajectory[ret * 32 + i + 1] = vec.y;
+						}
+						else {
+							trajectory[ret * 32 + i] = vec.x;
+							trajectory[ret * 32 + i + 1] = vec.y;
+						}
 					}
 				}
 
 				// Check state of each stone
 				for (unsigned int i = 0; i < board.shot_num_; i++) {
-					if (0 /* TODO:check stone is in playarea */) {
-						//  if a stone is out from playarea: DestroyBody() ?
-					}
-					else if (0 /* TODO:check freeguard zone rule */) {
-						//  if freeguard zone rule: break ?
-					}
-					//  if all stone is stopped: break
-					else if (board.body_[i]->IsAwake()) {
-						break;
-					}
-					if (i == board.shot_num_ - 1) {
-						goto LOOP_END;
+					if (board.body_[i] != nullptr) {
+						// Get area of stone
+						int area = GetStoneArea(board.body_[i]->GetPosition());
+						//std::cerr << "area[" << i << "] = " << std::bitset<8>(area) << std::endl;
+						if (area == 0) {
+							//  Destroy body if a stone is out from playarea
+							board.world_.DestroyBody(board.body_[i]);
+							board.body_[i] = nullptr;
+						}
+						else if (0 /* TODO:check freeguard zone rule */) {
+							//  if freeguard zone rule: break ?
+						}
+						//  if all stone is stopped: break
+						else if (board.body_[i]->IsAwake()) {
+							break;
+						}
+						if (i == board.shot_num_ - 1) {
+							goto LOOP_END;
+						}
 					}
 				}
 			}
@@ -169,7 +225,7 @@ namespace digital_curling {
 			board.SetShot(shot_vec);
 
 			// Run mainloop of simulation
-			MainLoop(kTimeStep, traj_size, board, trajectory, traj_size);
+			MainLoop(kTimeStep, (int)traj_size, board, trajectory, traj_size);
 
 			// Check freeguard zone rule
 			// TODO: implement, or do in mainloop?

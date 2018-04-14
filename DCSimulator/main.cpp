@@ -35,7 +35,7 @@ void operator_test() {
 
 void simuration_test() {
 	GameState gs(8);
-	ShotVec vec(0.0f, -2.000f, false);
+	ShotVec vec(0.0f, -30.000f, false);
 
 	const size_t traj_size = 4096;
 	float trajectory[32 * traj_size];
