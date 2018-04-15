@@ -27,7 +27,8 @@ namespace digital_curling {
 		constexpr float kStoneDensity    = 10.0f;
 		constexpr float kStoneResitution = 1.0f;
 		constexpr float kStoneFriction   = 12.009216f;  // NOTE: shoud NOT be constant?
-		constexpr float kHackY = 41.280f;     // Y coord of Hack? (Shot starts here)
+		constexpr float kStandardAngle   = 0.066696f;
+		constexpr float kForceVerticalBase = kStandardAngle * kStoneFriction;
 
 		// Constant values for Rink
 		constexpr float kPlayAreaXLeft   = 0.000f + kStoneR;
@@ -36,6 +37,7 @@ namespace digital_curling {
 		constexpr float kPlayAreaYBottom = kHogY - kStoneR;
 		constexpr float kRinkYTop        = 0.000f + kStoneR;
 		constexpr float kRinkYBottom     = 3.050f + kRinkHeight - kStoneR;
+		constexpr float kHackY           = 41.280f;     // Y coord of Hack?
 
 		// Constant values for simulation
 		constexpr int kVelocityIterations = 10;        // Iteration?
@@ -88,12 +90,18 @@ namespace digital_curling {
 					body_[i] = CreateBody(gs.body[i][0], gs.body[i][1], world_);
 				}
 
+				// Set ShotVec
 				assert(shot_num_ < 16);
 				// Create body
 				body_[shot_num_] = CreateBody(kCenterX, kHackY, world_);
 				// Set verocity
 				body_[shot_num_]->SetLinearVelocity(b2Vec2(vec.x, vec.y));
-				body_[shot_num_]->SetAngularVelocity(0.0f);  // should set number > 0 ?
+				if (vec.angle) {
+					body_[shot_num_]->SetAngularVelocity(-1 * kStandardAngle);
+				}
+				else {
+					body_[shot_num_]->SetAngularVelocity(kStandardAngle);
+				}
 
 				shot_num_++;
 			}
@@ -137,9 +145,54 @@ namespace digital_curling {
 			return ret;
 		}
 
+		// Add friction to single stone
+		b2Vec2 FrictionStep(float friction, b2Vec2 vec, float angle)
+		{
+			// Copied from CurlingSimulator
+			// TODO: Re-write
+			b2Vec2	velocity = vec;
+			float length = velocity.Length();
+
+			if (length > friction) {
+				b2Vec2 normalize, normalize2;
+				normalize = velocity;
+
+				normalize.Normalize();
+				normalize2.y = normalize.x;
+				normalize2.x = -1 * normalize.y;
+
+				normalize *= friction;
+				velocity -= normalize;
+
+				// ‰ñ“]‚É‚æ‚é‰e‹¿
+				if (angle != 0.0f && 0) {
+					normalize2 *= ((angle > 0) ? kForceVerticalBase : -kForceVerticalBase);
+					length = velocity.Length();
+					velocity += normalize2;
+					velocity.Normalize();
+					velocity *= length;
+				}
+
+				return velocity;
+			}
+			else {
+				return b2Vec2(0.0f, 0.0f);
+			}
+		}
+
 		// Add friction to all stones
 		void FrictionAll(float friction, Board &board) {
-			// TODO: impletent
+			b2Vec2 vec;
+
+			for (unsigned int i = 0; i < board.shot_num_; i++) {
+				if (board.body_[i] != nullptr) {
+					vec = FrictionStep(friction, board.body_[i]->GetLinearVelocity(), board.body_[i]->GetAngularVelocity());
+					board.body_[i]->SetLinearVelocity(vec);
+					if (vec.Length() == 0) {
+						board.body_[i]->SetAngularVelocity(0.0f);
+					}
+				}
+			}
 		}
 
 		// Main loop for simulation
