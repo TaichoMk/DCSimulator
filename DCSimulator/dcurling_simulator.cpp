@@ -28,7 +28,7 @@ namespace digital_curling {
 		constexpr float kStoneResitution = 1.0f;
 		constexpr float kStoneFriction   = 12.009216f;  // NOTE: shoud NOT be constant?
 		constexpr float kStandardAngle   = 0.066696f;
-		constexpr float kForceVerticalBase = kStandardAngle * kStoneFriction;
+		//constexpr float kForceVerticalBase = kStandardAngle * kStoneFriction;
 
 		// Constant values for Rink
 		constexpr float kPlayAreaXLeft   = 0.000f + kStoneR;
@@ -102,8 +102,6 @@ namespace digital_curling {
 				else {
 					body_[shot_num_]->SetAngularVelocity(kStandardAngle);
 				}
-
-				shot_num_++;
 			}
 			~Board() {
 				for (unsigned int i = 0; i < 16; i++) {
@@ -150,30 +148,40 @@ namespace digital_curling {
 		{
 			// Copied from CurlingSimulator
 			// TODO: Re-write
-			b2Vec2	velocity = vec;
-			float length = velocity.Length();
+			b2Vec2	v_ret = vec;
+			float v_length = vec.Length();
 
-			if (length > friction) {
-				b2Vec2 normalize, normalize2;
-				normalize = velocity;
+			if (v_length > friction) {
+				b2Vec2 norm, force_vertical;
 
-				normalize.Normalize();
-				normalize2.y = normalize.x;
-				normalize2.x = -1 * normalize.y;
+				// norm = normalized vector
+				norm = vec;
+				norm.x = vec.x / v_length;
+				norm.y = vec.y / v_length;
 
-				normalize *= friction;
-				velocity -= normalize;
+				// force_vertical = force which is applied vertically to vec
+				force_vertical.x = norm.y;
+				force_vertical.y = -1 * norm.y;
 
-				// ‰ñ“]‚É‚æ‚é‰e‹¿
-				if (angle != 0.0f && 0) {
-					normalize2 *= ((angle > 0) ? kForceVerticalBase : -kForceVerticalBase);
-					length = velocity.Length();
-					velocity += normalize2;
-					velocity.Normalize();
-					velocity *= length;
+				norm *= friction;
+				v_ret -= norm;
+
+				// Add vertical force
+				if (angle != 0.0f) {  // Only delivered shot has angle != 0
+					force_vertical *= 
+						((angle > 0) ? 
+						-friction * kStandardAngle:
+						friction * kStandardAngle);
+					v_length = v_ret.Length();
+					// Add vertical force
+					v_ret += force_vertical;
+					// Normalize again
+					v_ret.Normalize();
+					// Reform vec_ret
+					v_ret *= v_length;
 				}
 
-				return velocity;
+				return v_ret;
 			}
 			else {
 				return b2Vec2(0.0f, 0.0f);
@@ -184,9 +192,13 @@ namespace digital_curling {
 		void FrictionAll(float friction, Board &board) {
 			b2Vec2 vec;
 
-			for (unsigned int i = 0; i < board.shot_num_; i++) {
+			// Add friction to each stones in board
+			for (unsigned int i = 0; i < board.shot_num_ + 1; i++) {
 				if (board.body_[i] != nullptr) {
-					vec = FrictionStep(friction, board.body_[i]->GetLinearVelocity(), board.body_[i]->GetAngularVelocity());
+					vec = FrictionStep(
+						friction, 
+						board.body_[i]->GetLinearVelocity(), 
+						board.body_[i]->GetAngularVelocity());
 					board.body_[i]->SetLinearVelocity(vec);
 					if (vec.Length() == 0) {
 						board.body_[i]->SetAngularVelocity(0.0f);
@@ -197,12 +209,12 @@ namespace digital_curling {
 
 		// Main loop for simulation
 		int MainLoop(const float time_step, const int loop_count, Board &board, float *trajectory, size_t traj_size) {
-			int ret;
+			int num_steps;
 
 			// Add friction 0.5 step at first
 			FrictionAll(kStoneFriction * time_step * 0.5f, board);
 
-			for (ret = 0; ret < loop_count || ret == -1; ret++) {
+			for (num_steps = 0; num_steps < loop_count || num_steps == -1; num_steps++) {
 				// Calclate friction
 				board.world_.Step(time_step, kVelocityIterations, kPositionIterations);
 				FrictionAll(kStoneFriction * time_step, board);
@@ -210,51 +222,60 @@ namespace digital_curling {
 				// Record to trajectory array
 				if (trajectory != nullptr) {
 					b2Vec2 vec;
-					for (unsigned int i = 0; i < board.shot_num_ && i < traj_size; i++) {
+					for (unsigned int i = 0; i < board.shot_num_ + 1 && i < traj_size; i++) {
 						if (board.body_[i] != nullptr) {
 							vec = board.body_[i]->GetPosition();
-							trajectory[ret * 32 + i] = vec.x;
-							trajectory[ret * 32 + i + 1] = vec.y;
+							trajectory[num_steps * 32 + i] = vec.x;
+							trajectory[num_steps * 32 + i + 1] = vec.y;
 						}
 						else {
-							trajectory[ret * 32 + i] = vec.x;
-							trajectory[ret * 32 + i + 1] = vec.y;
+							trajectory[num_steps * 32 + i] = vec.x;
+							trajectory[num_steps * 32 + i + 1] = vec.y;
 						}
 					}
 				}
 
 				// Check state of each stone
-				for (unsigned int i = 0; i < board.shot_num_; i++) {
+				for (unsigned int i = 0; i < board.shot_num_ + 1; i++) {
 					if (board.body_[i] != nullptr) {
+						b2Vec2 vec = board.body_[i]->GetLinearVelocity();
 						// Get area of stone
 						int area = GetStoneArea(board.body_[i]->GetPosition());
-						//std::cerr << "area[" << i << "] = " << std::bitset<8>(area) << std::endl;
-						if (area == 0) {
-							//  Destroy body if a stone is out from playarea
+						if (area == OUT_OF_RINK) {
+							//  Destroy body if a stone is out from Rink
 							board.world_.DestroyBody(board.body_[i]);
 							board.body_[i] = nullptr;
 						}
-						else if (0 /* TODO:check freeguard zone rule */) {
-							//  if freeguard zone rule: break ?
-						}
-						//  if all stone is stopped: break
-						else if (board.body_[i]->IsAwake()) {
+						else if (vec.x != 0.0f || vec.y != 0.0f) {
+							// Continue first loop if a stone is awake
 							break;
 						}
-						if (i == board.shot_num_ - 1) {
-							goto LOOP_END;
-						}
+					}
+					if (i == board.shot_num_) {
+						// Break first loop if all stone is stopped
+						goto LOOP_END;
 					}
 				}
 			}
 
 			LOOP_END:
 
-			return ret;
+			// Remove delivered stone if not in playarea
+			if (board.body_[board.shot_num_] != nullptr) {
+				// Get area of stone
+				int area = GetStoneArea(board.body_[board.shot_num_]->GetPosition());
+				if (area ) {
+					//  Destroy body if a stone is out from playarea
+					board.world_.DestroyBody(board.body_[board.shot_num_]);
+					board.body_[board.shot_num_] = nullptr;
+				}
+			}
+
+			return num_steps;
 		}
 
 		// Simulation with Box2D (compatible with Simulation() in CurlingSimulator.h)
-		void Simulation(
+		int Simulation(
 			GameState* const game_state, 
 			ShotVec shot_vec, 
 			float random_x, float random_y, 
@@ -272,7 +293,9 @@ namespace digital_curling {
 			Board board(*game_state, shot_vec);
 
 			// Run mainloop of simulation
-			MainLoop(kTimeStep, (int)traj_size, board, trajectory, traj_size);
+			int steps = MainLoop(kTimeStep, (int)traj_size, board, trajectory, traj_size);
+
+			std::cerr << "MainLoop() stopped in " << steps << " steps" << std::endl;
 
 			// Check freeguard zone rule
 			// TODO: implement, or do in mainloop?
@@ -282,6 +305,8 @@ namespace digital_curling {
 
 			// Delete board
 			//delete &board;
+
+			return steps;
 		}
 
 		// Add random number to ShotVec (normal distribution)

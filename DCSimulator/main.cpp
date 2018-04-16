@@ -35,16 +35,17 @@ void operator_test() {
 
 void simuration_test() {
 	GameState gs(8);
-	ShotVec vec(0.0f, -30.000f, false);
+	ShotVec vec(-0.99074f, -29.559774f, false);
 
 	const size_t traj_size = 4096;
 	float trajectory[32 * traj_size];
 	memset(trajectory, 0, sizeof(float) * 32 * traj_size);
 
-	digital_curling::b2simulator::Simulation(&gs, vec, 0, 0, nullptr, trajectory, traj_size);
+	int steps = 
+		digital_curling::b2simulator::Simulation(&gs, vec, 0, 0, nullptr, trajectory, traj_size);
 
 	std::ofstream ofs("trajectory_log.txt");
-	for (unsigned int i = 0; i < traj_size; i++) {
+	for (int i = 0; i < steps; i++) {
 		for (unsigned int j = 0; j < 16; j++) {
 			ofs <<
 				std::fixed << std::setprecision(6) << trajectory[32 * i + 2 * j] << "," <<

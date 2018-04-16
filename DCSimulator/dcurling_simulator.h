@@ -77,12 +77,8 @@ namespace digital_curling {
 		// Simulator with Box2D 2.3.0 (http://box2d.org/)
 		namespace b2simulator {
 			// Area of stone
-			// 0x0000
-			//   |||+- is in Rink
-			//   ||+-- is in PlayArea
-			//   |+--- is in FreeGuard
-			//   +---- is in House
 			typedef enum {
+				OUT_OF_RINK  = 0x0000,
 				IN_RINK      = 0x0001,
 				IN_PLAYAREA  = IN_RINK << 1,
 				IN_FREEGUARD = IN_PLAYAREA << 1,
@@ -90,7 +86,8 @@ namespace digital_curling {
 			} StoneArea;
 
 			// Simulation with Box2D (compatible with Simulation() in CurlingSimulator.h)
-			void Simulation(
+			//  returns number of steps taken
+			int Simulation(
 				GameState* const game_state, ShotVec shot_vec, 
 				float random_x, float random_y, 
 				ShotVec* const run_shot, float *trajectory, size_t traj_size);
