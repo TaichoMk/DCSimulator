@@ -214,7 +214,7 @@ namespace digital_curling {
 			// Add friction 0.5 step at first
 			FrictionAll(kStoneFriction * time_step * 0.5f, board);
 
-			for (num_steps = 0; num_steps < loop_count || num_steps == -1; num_steps++) {
+			for (num_steps = 0; num_steps < loop_count || loop_count == -1; num_steps++) {
 				// Calclate friction
 				board.world_.Step(time_step, kVelocityIterations, kPositionIterations);
 				FrictionAll(kStoneFriction * time_step, board);
@@ -264,7 +264,7 @@ namespace digital_curling {
 			if (board.body_[board.shot_num_] != nullptr) {
 				// Get area of stone
 				int area = GetStoneArea(board.body_[board.shot_num_]->GetPosition());
-				if (area ) {
+				if (!(area & IN_PLAYAREA)) {
 					//  Destroy body if a stone is out from playarea
 					board.world_.DestroyBody(board.body_[board.shot_num_]);
 					board.body_[board.shot_num_] = nullptr;
@@ -272,6 +272,73 @@ namespace digital_curling {
 			}
 
 			return num_steps;
+		}
+
+		// Check Freeguard rule
+		//  returns true if stone is removed in freeguard
+		bool IsFreeguardFoul(
+			const Board &board,        // Board after simulation
+			const GameState* const gs  // GameState before simulation
+		) {
+			if (gs->ShotNum < kNumFreeguard) {
+				int area_before;
+				int area_after;
+				for (unsigned int i = 0; i < gs->ShotNum; i++) {
+					// Get stone area before and after Simulation
+					area_before =
+						GetStoneArea(b2Vec2(gs->body[i][0], gs->body[i][1]));
+					area_after = (board.body_[i] != nullptr) ?
+						GetStoneArea(board.body_[i]->GetPosition()) :
+						OUT_OF_RINK;
+					if ((area_before & area_freeguard) && !(area_after & IN_PLAYAREA)) {
+						// if area b4 sim is PLAYAREA and area after is NOT PLAYAREA
+						std::cerr << "Freeguard foul." << std::endl;
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		int GetScore(const GameState* const game_state) {
+			return 0;
+		}
+
+		// Update game_state from board
+		void UpdateState(const Board &board, GameState* const game_state) {
+			// Update ShotNum (ShotNum can be 16, not reset to 0)
+			game_state->ShotNum++;
+
+			// Update positions
+			for (unsigned int i = 0; i < game_state->ShotNum; i++) {
+				if (board.body_[i] != nullptr) {
+					b2Vec2 pos = board.body_[i]->GetPosition();
+					game_state->body[i][0] = pos.x;
+					game_state->body[i][1] = pos.y;
+				}
+				else {
+					game_state->body[i][0] = 0.0f;
+					game_state->body[i][1] = 0.0f;
+				}
+			}
+
+			// Update Score if ShotNum == 16
+			if (game_state->ShotNum == 16) {
+				// Calculate Socre
+				int score = GetScore(game_state);
+				game_state->Score[game_state->CurEnd] = score;
+				// Update WhiteToMove
+				if (score == 0) {
+					game_state->WhiteToMove ^= true;
+				}
+				else {
+					game_state->WhiteToMove = !(score > 0);
+				}
+			}
+			else {
+				// Update WhiteToMove
+				game_state->WhiteToMove ^= true;
+			}
 		}
 
 		// Simulation with Box2D (compatible with Simulation() in CurlingSimulator.h)
@@ -293,15 +360,16 @@ namespace digital_curling {
 			Board board(*game_state, shot_vec);
 
 			// Run mainloop of simulation
-			int steps = MainLoop(kTimeStep, (int)traj_size, board, trajectory, traj_size);
-
-			std::cerr << "MainLoop() stopped in " << steps << " steps" << std::endl;
+			int steps = MainLoop(kTimeStep, -1, board, trajectory, traj_size);
 
 			// Check freeguard zone rule
-			// TODO: implement, or do in mainloop?
+			if (IsFreeguardFoul(board, game_state)) {
+				game_state->ShotNum++;
+				return -1;
+			}
 
 			// Update game_state
-			// TODO: implement
+			UpdateState(board, game_state);
 
 			// Delete board
 			//delete &board;
@@ -319,7 +387,7 @@ namespace digital_curling {
 			num_freeguard = shot_num;
 			area_freeguard = area;
 		}
-		// Reset
+		// Set options to default
 		void SetOptions() {
 			num_freeguard = kNumFreeguard;
 			area_freeguard = kAreaFreeguard;

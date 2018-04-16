@@ -9,6 +9,8 @@ using digital_curling::GameState;
 using digital_curling::ShotPos;
 using digital_curling::ShotVec;
 
+using digital_curling::b2simulator::Simulation;
+
 using std::cout;
 using std::endl;
 
@@ -33,6 +35,14 @@ void operator_test() {
 	cout << "pos_add.angle = " << pos_add.angle << endl;
 }
 
+inline void PrintGameState(const GameState &gs) {
+	cout << "ShotNum = " << gs.ShotNum << ", CurEnd = " << gs.CurEnd << "/" << gs.LastEnd << endl;
+	for (int i = 0; i < 16; i++) {
+		cout << "(" << gs.body[i][0] << ", " << gs.body[i][1] << ") ";
+	}
+	cout << endl;
+}
+
 void simuration_test() {
 	GameState gs(8);
 	ShotVec vec(-0.99074f, -29.559774f, false);
@@ -41,8 +51,9 @@ void simuration_test() {
 	float trajectory[32 * traj_size];
 	memset(trajectory, 0, sizeof(float) * 32 * traj_size);
 
-	int steps = 
-		digital_curling::b2simulator::Simulation(&gs, vec, 0, 0, nullptr, trajectory, traj_size);
+	int steps = Simulation(&gs, vec, 0, 0, nullptr, trajectory, traj_size);
+
+	PrintGameState(gs);
 
 	std::ofstream ofs("trajectory_log.txt");
 	for (int i = 0; i < steps; i++) {
@@ -56,6 +67,10 @@ void simuration_test() {
 		}
 		ofs << endl;
 	}
+
+	steps = Simulation(&gs, vec, 0, 0, nullptr, trajectory, traj_size);
+
+	PrintGameState(gs);
 }
 
 int  main(void) {

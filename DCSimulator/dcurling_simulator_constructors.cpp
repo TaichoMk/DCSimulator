@@ -1,5 +1,7 @@
-// Constructors and operators in dcurling_simulator.h
+// Constructors, operators and setter/getter or something
 #include "dcurling_simulator.h"
+
+#include <string>
 
 namespace digital_curling {
 	// Constructors
@@ -18,6 +20,11 @@ namespace digital_curling {
 		WhiteToMove(true),
 		body() {}
 	GameState::~GameState() {}
+
+	void GameState::Clear() {
+		ShotNum = 0;
+		memset(body, 0x00, 2 * 16 * sizeof(float));
+	}
 
 	ShotPos::ShotPos() :
 		x(0.0f),

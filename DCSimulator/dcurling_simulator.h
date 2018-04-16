@@ -22,6 +22,9 @@ namespace digital_curling {
 			GameState(unsigned int last_end);
 			~GameState();
 
+			// Clear body and Set ShotNum = 0
+			void Clear();
+
 			//  Note: Same member variables as GAMESTATE in CurlingSimulator older ver2.x
 			unsigned int ShotNum;    // Number of current Shot
 
@@ -97,7 +100,7 @@ namespace digital_curling {
 
 			// Set options for freeguard zone rule
 			void SetOptions(unsigned int shot_num, StoneArea area);
-			// Reset options to default
+			// Set options to default
 			void SetOptions();
 		}
 }
