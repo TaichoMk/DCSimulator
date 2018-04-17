@@ -67,26 +67,8 @@ namespace digital_curling {
 			bool angle;
 		} _ShotVec;
 
-		// Operators
-		ShotPos operator+(ShotPos pos_l, ShotPos pos_r);
-		ShotPos operator-(ShotPos pos_l, ShotPos pos_rs);
-		ShotPos operator+=(ShotPos &pos_l, ShotPos pos_r);
-		ShotPos operator-=(ShotPos &pos_l, ShotPos pos_r);
-		ShotVec operator+(ShotVec pos_l, ShotVec pos_r);
-		ShotVec operator-(ShotVec pos_l, ShotVec pos_r);
-		ShotVec operator+=(ShotVec &pos_l, ShotVec pos_r);
-		ShotVec operator-=(ShotVec &pos_l, ShotVec pos_r);
-
 		// Simulator with Box2D 2.3.0 (http://box2d.org/)
 		namespace b2simulator {
-			// Area of stone
-			typedef enum {
-				OUT_OF_RINK  = 0x0000,
-				IN_RINK      = 0x0001,
-				IN_PLAYAREA  = IN_RINK << 1,
-				IN_FREEGUARD = IN_PLAYAREA << 1,
-				IN_HOUSE     = IN_FREEGUARD << 1
-			} StoneArea;
 
 			// Simulation with Box2D (compatible with Simulation() in CurlingSimulator.h)
 			//  returns number of steps taken
@@ -104,9 +86,28 @@ namespace digital_curling {
 			// Return score of second (which has last shot in this end)
 			int GetScore(const GameState* const game_state);
 
+			// Area of stone
+			typedef enum {
+				OUT_OF_RINK = 0x0000,
+				IN_RINK = 0x0001,
+				IN_PLAYAREA = IN_RINK << 1,
+				IN_FREEGUARD = IN_PLAYAREA << 1,
+				IN_HOUSE = IN_FREEGUARD << 1
+			} StoneArea;
+
 			// Set options for freeguard zone rule
 			void SetOptions(unsigned int shot_num, StoneArea area);
 			// Set options to default
 			void SetOptions();
 		}
+
+		// Operators
+		ShotPos operator+(ShotPos pos_l, ShotPos pos_r);
+		ShotPos operator-(ShotPos pos_l, ShotPos pos_rs);
+		ShotPos operator+=(ShotPos &pos_l, ShotPos pos_r);
+		ShotPos operator-=(ShotPos &pos_l, ShotPos pos_r);
+		ShotVec operator+(ShotVec pos_l, ShotVec pos_r);
+		ShotVec operator-(ShotVec pos_l, ShotVec pos_r);
+		ShotVec operator+=(ShotVec &pos_l, ShotVec pos_r);
+		ShotVec operator-=(ShotVec &pos_l, ShotVec pos_r);
 }
