@@ -73,10 +73,25 @@ void simuration_test() {
 	PrintGameState(gs);
 }
 
+void score_test() {
+	using namespace digital_curling;
+	GameState gs(8);
+	gs.body[0][0] = kCenterX + kStoneR;
+	gs.body[0][1] = kTeeY;
+	gs.body[1][0] = kCenterX;
+	gs.body[1][1] = kTeeY + 3 * kStoneR;
+	gs.body[2][0] = kCenterX + kStoneR;
+	gs.body[2][1] = kTeeY + 5 * kStoneR;
+	gs.ShotNum = 3;
+
+	cout << "Score = " << b2simulator::GetScore(&gs) << endl;
+}
+
 int  main(void) {
 
 	//operator_test();
-	simuration_test();
+	//simuration_test();
+	score_test();
 
 	return 0;
 }

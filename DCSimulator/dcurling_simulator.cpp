@@ -1,9 +1,7 @@
 #include "dcurling_simulator.h"
 
-//#include <time.h>
 #include <random>
-//#include <cstdlib>
-//#include <cstring>
+#include <cmath>
 
 // Include for debug TODO: Delete in Release build
 #include <bitset>
@@ -146,15 +144,13 @@ namespace digital_curling {
 		// Add friction to single stone
 		b2Vec2 FrictionStep(float friction, b2Vec2 vec, float angle)
 		{
-			// Copied from CurlingSimulator
-			// TODO: Re-write
 			b2Vec2	v_ret = vec;
 			float v_length = vec.Length();
 
 			if (v_length > friction) {
 				b2Vec2 norm, force_vertical;
 
-				// norm = normalized vector
+				// norm = normalized vector from vec
 				norm = vec;
 				norm.x = vec.x / v_length;
 				norm.y = vec.y / v_length;
@@ -300,8 +296,52 @@ namespace digital_curling {
 			return false;
 		}
 
+		// Get distance from (0,0)
+		inline float GetDistance(float x, float y) {
+			return sqrt(pow(x, 2) + pow(y, 2));
+		}
+
+		// Return score of second (which has last shot in this end)
 		int GetScore(const GameState* const game_state) {
-			return 0;
+
+			struct Stone {
+				unsigned int shot_num = 0;   // Number of shot
+				float distance = 9999.0f;    // Distance from center of House
+			} stone[16];
+
+			// Get Number and Distance
+			for (unsigned int i = 0; i < game_state->ShotNum; i++) {
+				stone[i].shot_num = i;
+				stone[i].distance = GetDistance(
+					game_state->body[i][0] - kCenterX, 
+					game_state->body[i][1] - kTeeY);
+			}
+
+			// Sort by distance
+			std::sort(stone, stone + game_state->ShotNum, 
+				[](const Stone& s1, const Stone s2) {return s1.distance < s2.distance; });
+
+			/*
+			for (int i = 0; i < game_state->ShotNum; i++) {
+				std::cerr << "stone[" << i << "].shot_num = " << stone[i].shot_num << std::endl;
+				std::cerr << "stone[" << i << "].distance = " << stone[i].distance << std::endl;
+			}*/
+
+			// Calculate score
+			int score = 0;                    // Score
+			int mod = stone[0].shot_num % 2;  // Player which has no.1 stone
+			int base = (mod == 0) ? -1 : 1;   // Score per 1 stone
+			for (unsigned int i = 0; i < game_state->ShotNum; i++) {
+				if ((stone[i].distance < kHouseR + kStoneR) &&
+					(stone[i].shot_num % 2 == mod)) {
+					score += base;
+				}
+				else {
+					break;
+				}
+			}
+			
+			return score;
 		}
 
 		// Update game_state from board
@@ -326,13 +366,14 @@ namespace digital_curling {
 			if (game_state->ShotNum == 16) {
 				// Calculate Socre
 				int score = GetScore(game_state);
-				game_state->Score[game_state->CurEnd] = score;
+				game_state->Score[game_state->CurEnd] = 
+					(game_state->WhiteToMove) ? -score : score;
 				// Update WhiteToMove
 				if (score == 0) {
 					game_state->WhiteToMove ^= true;
 				}
 				else {
-					game_state->WhiteToMove = !(score > 0);
+					game_state->WhiteToMove = (score < 0);
 				}
 			}
 			else {
@@ -370,9 +411,6 @@ namespace digital_curling {
 
 			// Update game_state
 			UpdateState(board, game_state);
-
-			// Delete board
-			//delete &board;
 
 			return steps;
 		}
