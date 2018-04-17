@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <ctime>
 
 using digital_curling::GameState;
 using digital_curling::ShotPos;
@@ -95,12 +96,47 @@ void create_shot_test() {
 	cout << "vec = (" << vec.x << "," << vec.y << ")" << endl;
 }
 
+void random_test() {
+	using namespace digital_curling;
+
+	// Create game_state
+	GameState gs(8);
+
+	// Create shot
+	ShotVec vec, vec_tmp;
+	b2simulator::CreateShot(ShotPos(kCenterX, kTeeY, false), &vec);
+
+
+	int sigma1_x = 0;
+	int sigma2_x = 0;
+	const int loop = 1000;
+	const float random = 0.145f;
+	time_t start = clock();
+	for (int i = 0; i < loop; i++) {
+		gs.Clear();
+		vec_tmp = vec;
+		Simulation(&gs, vec_tmp, random, random, nullptr, nullptr, 0);
+		if (pow(kCenterX - gs.body[0][0], 2) < pow(random, 2)) {
+			sigma1_x++;
+		}
+		if (pow(kCenterX - gs.body[0][0], 2) < pow(2 * random, 2)) {
+			sigma2_x++;
+		}
+	}
+	time_t time_spent = clock() - start;
+	float sigma1 = (float)sigma1_x / (float)loop;
+	float sigma2 = (float)sigma2_x / (float)loop;
+	cout << "Rate in sigma1, sigma2: " << sigma1 << ", " << sigma2 << endl;
+	cout << "Time spent = " << time_spent << endl;
+}
+
 int  main(void) {
 
 	//operator_test();
 	//simuration_test();
 	//score_test();
-	create_shot_test();
+	//create_shot_test();
+	random_test();
 
 	return 0;
 }

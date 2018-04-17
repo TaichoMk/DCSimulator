@@ -288,7 +288,6 @@ namespace digital_curling {
 						OUT_OF_RINK;
 					if ((area_before & area_freeguard) && !(area_after & IN_PLAYAREA)) {
 						// if area b4 sim is PLAYAREA and area after is NOT PLAYAREA
-						std::cerr << "Freeguard foul." << std::endl;
 						return true;
 					}
 				}
@@ -320,12 +319,6 @@ namespace digital_curling {
 			// Sort by distance
 			std::sort(stone, stone + game_state->ShotNum, 
 				[](const Stone& s1, const Stone s2) {return s1.distance < s2.distance; });
-
-			/*
-			for (int i = 0; i < game_state->ShotNum; i++) {
-				std::cerr << "stone[" << i << "].shot_num = " << stone[i].shot_num << std::endl;
-				std::cerr << "stone[" << i << "].distance = " << stone[i].distance << std::endl;
-			}*/
 
 			// Calculate score
 			int score = 0;                    // Score
@@ -390,6 +383,10 @@ namespace digital_curling {
 			ShotVec* const run_shot, 
 			float *trajectory, size_t traj_size) {
 
+			if (game_state->ShotNum > 15) {
+				return -1;
+			}
+
 			// Add random number to shot
 			AddRandom2Vec(random_x, random_y, &shot_vec);
 			if (run_shot != nullptr) {
@@ -406,7 +403,8 @@ namespace digital_curling {
 			// Check freeguard zone rule
 			if (IsFreeguardFoul(board, game_state)) {
 				game_state->ShotNum++;
-				return -1;
+				game_state->WhiteToMove ^= 1;
+				return 0;
 			}
 
 			// Update game_state
@@ -454,7 +452,29 @@ namespace digital_curling {
 
 		// Add random number to ShotVec (normal distribution)
 		void AddRandom2Vec(float random_x, float random_y, ShotVec* const vec) {
-			// TODO: implement
+			// Prepare random
+			std::random_device seed_gen;
+			std::default_random_engine engine(seed_gen());
+
+			ShotPos tee_pos(kCenterX, kTeeY, vec->angle);
+			ShotVec tee_shot, add_rand_tee_shot;
+
+			// Create shot to center of house
+			CreateShot(tee_pos, &tee_shot);
+
+			// Add random to tee_pos (normal distribution)
+			if (random_x != 0.0f) {
+				std::normal_distribution<float> dist_x(0, random_x);
+				tee_pos.x += dist_x(engine);
+			}
+			if (random_y != 0.0f) {
+				std::normal_distribution<float> distY(0, random_y);
+				tee_pos.y += distY(engine);
+			}
+			CreateShot(tee_pos, &add_rand_tee_shot);
+
+			// Add random to vec
+			*vec += tee_shot - add_rand_tee_shot;
 		}
 
 		// Set options for freeguard zone rule
