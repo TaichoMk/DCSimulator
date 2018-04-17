@@ -87,11 +87,20 @@ void score_test() {
 	cout << "Score = " << b2simulator::GetScore(&gs) << endl;
 }
 
+void create_shot_test() {
+	using namespace digital_curling;
+	ShotVec vec;
+	b2simulator::CreateShot(ShotPos(kCenterX, kTeeY, false), &vec);
+
+	cout << "vec = (" << vec.x << "," << vec.y << ")" << endl;
+}
+
 int  main(void) {
 
 	//operator_test();
 	//simuration_test();
-	score_test();
+	//score_test();
+	create_shot_test();
 
 	return 0;
 }

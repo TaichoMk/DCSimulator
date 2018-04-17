@@ -95,11 +95,14 @@ namespace digital_curling {
 				float random_x, float random_y, 
 				ShotVec* const run_shot, float *trajectory, size_t traj_size);
 
+			// Create ShotVec from ShotPos which a stone will stop at
+			void CreateShot(ShotPos pos, ShotVec* const vec);
+
 			// Add random number to ShotVec (normal distribution)
 			void AddRandom2Vec(float random_x, float random_y, ShotVec* const vec);
 
 			// Return score of second (which has last shot in this end)
-			inline int GetScore(const GameState* const game_state);
+			int GetScore(const GameState* const game_state);
 
 			// Set options for freeguard zone rule
 			void SetOptions(unsigned int shot_num, StoneArea area);

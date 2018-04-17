@@ -415,6 +415,43 @@ namespace digital_curling {
 			return steps;
 		}
 
+		// ?
+		b2Vec2 CreateShot(float x, float y)
+		{
+			b2Vec2 Shot;
+			float len;
+
+			Shot.Set(x - kCenterX, y - kHackY);
+			len = Shot.Length();
+			Shot.Normalize();
+			Shot.operator *=(sqrt(len * 2.0f * kStoneFriction));
+
+			return Shot;
+		}
+
+		// Create ShotVec from ShotPos which a stone will stop at
+		void CreateShot(ShotPos pos, ShotVec* const vec)
+		{
+			float tt = 0.0335f;
+			float x_base = 1.22f;
+			b2Vec2 vec_tmp;
+
+			if (pos.angle == true) {
+				vec_tmp = CreateShot(
+					x_base + pos.x - tt*(pos.y - kTeeY), 
+					tt*(pos.x - kCenterX) + pos.y);
+			}
+			else {
+				vec_tmp = CreateShot(
+					-x_base + pos.x + tt*(pos.y - kTeeY), 
+					-tt*(pos.x - kCenterX) + pos.y);
+			}
+
+			vec->x = vec_tmp.x;
+			vec->y = vec_tmp.y;
+			vec->angle = pos.angle;
+		}
+
 		// Add random number to ShotVec (normal distribution)
 		void AddRandom2Vec(float random_x, float random_y, ShotVec* const vec) {
 			// TODO: implement
