@@ -1,5 +1,13 @@
 #pragma once
 
+#ifndef DLLEXP
+#ifdef _WIN32
+#define DLLEXP __declspec(dllexport)
+#else // _WIN32
+#define DLLEXP
+#endif // _WIN32
+#endif // _DLLEXP
+
 namespace digital_curling {
 
 		// Constant values
@@ -16,7 +24,7 @@ namespace digital_curling {
 		constexpr float kHouse4FootR =  0.610f;  // Radius of House ( 4 foot circle)
 
 		// State of DigitalCurling game
-		typedef struct GameState {
+		class DLLEXP GameState {
 		public:
 			GameState();
 			GameState(unsigned int last_end);
@@ -46,10 +54,11 @@ namespace digital_curling {
 			float body[16][2];       // position of stones
 			                         //       [n][0] : x coord of n th deliverd stone
 			                         //       [n][1] : y coord
-		} _GameState;
+		};
 
 		// Position of Stone
-		typedef struct ShotPos {
+		class DLLEXP ShotPos {
+		public:
 			ShotPos();
 			ShotPos(float x, float y, bool angle);
 			~ShotPos();
@@ -57,10 +66,11 @@ namespace digital_curling {
 			float x;
 			float y;
 			bool angle;
-		} _ShotPos;
+		};
 
 		// Vector of Stone
-		typedef struct ShotVec {
+		class DLLEXP ShotVec {
+		public:
 			ShotVec();
 			ShotVec(float x, float y, bool angle);
 			~ShotVec();
@@ -68,29 +78,29 @@ namespace digital_curling {
 			float x;
 			float y;
 			bool angle;
-		} _ShotVec;
+		};
 
 		// Simulator with Box2D 2.3.0 (http://box2d.org/)
 		namespace b2simulator {
 
 			// Simulation with Box2D (compatible with Simulation() in CurlingSimulator.h)
 			//  returns number of steps taken
-			int Simulation(
+			DLLEXP int Simulation(
 				GameState* const game_state, ShotVec shot_vec, 
 				float random_x, float random_y, 
 				ShotVec* const run_shot, float *trajectory, size_t traj_size);
 
 			// Create ShotVec from ShotPos which a stone will stop at
-			void CreateShot(ShotPos pos, ShotVec* const vec);
+			DLLEXP void CreateShot(ShotPos pos, ShotVec* const vec);
 
 			// Add random number to ShotVec (normal distribution)
-			void AddRandom2Vec(float random_x, float random_y, ShotVec* const vec);
+			DLLEXP void AddRandom2Vec(float random_x, float random_y, ShotVec* const vec);
 
 			// Return score of second (which has last shot in this end)
-			int GetScore(const GameState* const game_state);
+			DLLEXP int GetScore(const GameState* const game_state);
 
 			// Area of stone
-			typedef enum {
+			DLLEXP typedef enum {
 				OUT_OF_RINK = 0x0000,
 				IN_RINK = 0x0001,
 				IN_PLAYAREA = IN_RINK << 1,
@@ -99,18 +109,18 @@ namespace digital_curling {
 			} StoneArea;
 
 			// Set options for freeguard zone rule
-			void SetOptions(unsigned int shot_num, StoneArea area);
+			DLLEXP void SetOptions(unsigned int shot_num, StoneArea area);
 			// Set options to default
-			void SetOptions();
+			DLLEXP void SetOptions();
 		}
 
 		// Operators
-		ShotPos operator+(ShotPos pos_l, ShotPos pos_r);
-		ShotPos operator-(ShotPos pos_l, ShotPos pos_rs);
-		ShotPos operator+=(ShotPos &pos_l, ShotPos pos_r);
-		ShotPos operator-=(ShotPos &pos_l, ShotPos pos_r);
-		ShotVec operator+(ShotVec pos_l, ShotVec pos_r);
-		ShotVec operator-(ShotVec pos_l, ShotVec pos_r);
-		ShotVec operator+=(ShotVec &pos_l, ShotVec pos_r);
-		ShotVec operator-=(ShotVec &pos_l, ShotVec pos_r);
+		DLLEXP ShotPos operator+(ShotPos pos_l, ShotPos pos_r);
+		DLLEXP ShotPos operator-(ShotPos pos_l, ShotPos pos_rs);
+		DLLEXP ShotPos operator+=(ShotPos &pos_l, ShotPos pos_r);
+		DLLEXP ShotPos operator-=(ShotPos &pos_l, ShotPos pos_r);
+		DLLEXP ShotVec operator+(ShotVec pos_l, ShotVec pos_r);
+		DLLEXP ShotVec operator-(ShotVec pos_l, ShotVec pos_r);
+		DLLEXP ShotVec operator+=(ShotVec &pos_l, ShotVec pos_r);
+		DLLEXP ShotVec operator-=(ShotVec &pos_l, ShotVec pos_r);
 }

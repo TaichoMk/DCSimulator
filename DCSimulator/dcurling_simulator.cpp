@@ -10,6 +10,12 @@
 
 #include "Box2D/Box2D.h"
 
+#ifdef _WIN32
+#define DLLEXP __declspec(dllexport)
+#else // _WIN32
+#define DLLEXP
+#endif // _WIN32
+
 #ifdef _DEBUG
 #pragma comment( lib, "Box2D/bin/Box2D_d.lib" )
 #endif
