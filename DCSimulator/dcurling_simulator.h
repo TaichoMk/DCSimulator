@@ -25,6 +25,9 @@ namespace digital_curling {
 			// Clear body and Set ShotNum = 0
 			void Clear();
 
+			// Set stone 
+			void Set(unsigned int num, float x, float y);
+
 			//  Note: Same member variables as GAMESTATE in CurlingSimulator older ver2.x
 			unsigned int ShotNum;    // Number of current Shot
 

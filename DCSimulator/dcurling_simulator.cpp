@@ -204,7 +204,58 @@ namespace digital_curling {
 		}
 
 		// Main loop for simulation
-		int MainLoop(const float time_step, const int loop_count, Board &board, float *trajectory, size_t traj_size) {
+		int MainLoop(const float time_step, const int loop_count, Board &board) {
+			int num_steps;
+
+			// Add friction 0.5 step at first
+			FrictionAll(kStoneFriction * time_step * 0.5f, board);
+
+			for (num_steps = 0; num_steps < loop_count || loop_count == -1; num_steps++) {
+				// Calclate friction
+				board.world_.Step(time_step, kVelocityIterations, kPositionIterations);
+				FrictionAll(kStoneFriction * time_step, board);
+
+				// Check state of each stone
+				for (unsigned int i = 0; i < board.shot_num_ + 1; i++) {
+					if (board.body_[i] != nullptr) {
+						b2Vec2 vec = board.body_[i]->GetLinearVelocity();
+						// Get area of stone
+						int area = GetStoneArea(board.body_[i]->GetPosition());
+						if (area == OUT_OF_RINK) {
+							//  Destroy body if a stone is out from Rink
+							board.world_.DestroyBody(board.body_[i]);
+							board.body_[i] = nullptr;
+						}
+						else if (vec.x != 0.0f || vec.y != 0.0f) {
+							// Continue first loop if a stone is awake
+							break;
+						}
+					}
+					if (i == board.shot_num_) {
+						// Break first loop if all stone is stopped
+						goto LOOP_END;
+					}
+				}
+			}
+
+			LOOP_END:
+
+			// Remove delivered stone if not in playarea
+			if (board.body_[board.shot_num_] != nullptr) {
+				// Get area of stone
+				int area = GetStoneArea(board.body_[board.shot_num_]->GetPosition());
+				if (!(area & IN_PLAYAREA)) {
+					//  Destroy body if a stone is out from playarea
+					board.world_.DestroyBody(board.body_[board.shot_num_]);
+					board.body_[board.shot_num_] = nullptr;
+				}
+			}
+
+			return num_steps;
+		}
+
+		// Main loop for simulation (with recording trajectory)
+		int MainLoop_Trajectory(const float time_step, const int loop_count, Board &board, float *trajectory, size_t traj_size) {
 			int num_steps;
 
 			// Add friction 0.5 step at first
@@ -254,7 +305,7 @@ namespace digital_curling {
 				}
 			}
 
-			LOOP_END:
+		LOOP_END:
 
 			// Remove delivered stone if not in playarea
 			if (board.body_[board.shot_num_] != nullptr) {
@@ -398,7 +449,13 @@ namespace digital_curling {
 			Board board(*game_state, shot_vec);
 
 			// Run mainloop of simulation
-			int steps = MainLoop(kTimeStep, -1, board, trajectory, traj_size);
+			int steps;
+			if (trajectory != nullptr) {
+				steps = MainLoop_Trajectory(kTimeStep, -1, board, trajectory, traj_size);
+			}
+			else {
+				steps = MainLoop(kTimeStep, -1, board);
+			}
 
 			// Check freeguard zone rule
 			if (IsFreeguardFoul(board, game_state)) {

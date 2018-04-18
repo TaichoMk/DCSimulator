@@ -2,6 +2,7 @@
 #include "dcurling_simulator.h"
 
 #include <string>
+#include <cassert>
 
 namespace digital_curling {
 	// Constructors
@@ -21,9 +22,20 @@ namespace digital_curling {
 		body() {}
 	GameState::~GameState() {}
 
+	// Clear body and Set ShotNum = 0
 	void GameState::Clear() {
 		ShotNum = 0;
 		memset(body, 0x00, 2 * 16 * sizeof(float));
+	}
+
+	// Set stone 
+	void GameState::Set(unsigned int num, float x, float y) {
+		assert(num < 16);
+		body[num][0] = x;
+		body[num][1] = y;
+		if (num >= ShotNum) {
+			ShotNum++;
+		}
 	}
 
 	ShotPos::ShotPos() :
