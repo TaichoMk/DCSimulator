@@ -30,7 +30,7 @@ namespace digital_curling {
 		// Constant values for Stone
 		constexpr float kStoneDensity    = 10.0f;
 		constexpr float kStoneResitution = 1.0f;
-		constexpr float kStoneFriction   = 12.009216f;  // NOTE: shoud NOT be constant?
+		constexpr float kStoneFriction   = 12.009216f;
 		constexpr float kStandardAngle   = 0.066696f;
 		//constexpr float kForceVerticalBase = kStandardAngle * kStoneFriction;
 
@@ -73,8 +73,10 @@ namespace digital_curling {
 			b2FixtureDef fixture_def;
 			fixture_def.shape       = &dynamic_ball;
 			fixture_def.density     = kStoneDensity;
-			fixture_def.restitution = kStoneResitution;
-			fixture_def.friction    = kStoneFriction;
+			fixture_def.restitution = kStoneResitution;\
+			// Note: friction = 12.00 is too large 
+			//       this makes excessive anglar velocity after collision
+			fixture_def.friction    = kStoneFriction;  // TODO: Set smaller value
 
 			// Create Fixture
 			body->CreateFixture(&fixture_def);
@@ -170,8 +172,7 @@ namespace digital_curling {
 
 				// Add vertical force
 				if (angle != 0.0f) {  // Only delivered shot has angle != 0
-					force_vertical *= 
-						((angle > 0) ? 
+					force_vertical *= ((angle > 0) ? 
 						-friction * kStandardAngle:
 						friction * kStandardAngle);
 					v_length = v_ret.Length();
